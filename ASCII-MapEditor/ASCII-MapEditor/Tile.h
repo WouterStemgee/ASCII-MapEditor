@@ -6,12 +6,17 @@
 #define MAP_HEIGHT			75
 #define EDITOR_HEIGHT		4
 #define MAP_EXTENSION		".map"
+#define MAX_MESSAGE_LENGTH	1000
+
+#define MONSTER_INFO_FILE	"Monsters.txt"
+#define ITEM_INFO_FILE		"Items.txt"
+#define NPC_INFO_FILE		"Npcs.txt"
 
 #define TILE_TYPE			0
 #define ITEM_TYPE			1
 #define MONSTER_TYPE		2
 #define NPC_TYPE			3
-#define EXIT_TYPE			4
+#define TRANSITION_TYPE		4
 
 class Tile {
 public:
@@ -35,6 +40,10 @@ public:
 	void setStrength(int _strength) { strength = _strength; }
 	void setProtection(int _protection) { protection = _protection; }
 	void setName(const std::string& _name) { name = _name; }
+	const int getLife() { return life; }
+	const int getStrength() { return strength; }
+	const int getProtection() { return protection; }
+	const std::string& getName() { return name; }
 private:
 	int life;
 	int strength;
@@ -49,6 +58,10 @@ public:
 	void setStrength(int _strength) { strength = _strength; }
 	void setName(const std::string& _name) { name = _name; }
 	void setSpeed(int _speed) { speed = _speed; }
+	const int getLife() { return life; }
+	const int getStrength() { return strength; }
+	const std::string& getName() { return name; }
+	const int getSpeed() { return speed; }
 private:
 	int life;
 	int strength;
@@ -61,9 +74,14 @@ public:
 	Npc();
 	void setLife(int _life) { life = _life; }
 	void setStrength(int _strength) { strength = _strength; }
+	void setSpeed(int _speed) { speed = _speed; }
 	void setName(const std::string& _name) { name = _name; }
 	void setMessage(const std::string& _message) { message = _message; }
-	void setSpeed(int _speed) { speed = _speed; }
+	const int getLife() { return life; }
+	const int getStrength() { return strength; }
+	const int getSpeed() { return speed; }
+	const std::string& getName() { return name; }
+	const std::string& getMessage() { return name; }
 private:
 	int life;
 	int strength;
@@ -93,6 +111,10 @@ public:
 	void setDefault();
 	void draw();
 	void setCurrentListType(int _currentListType) { currentListType = _currentListType; }
+	void drawTileInfo();
+	void insertTile(Tile* tile, int x, int y);
+	void deleteTile(int mapX, int mapY);
+	void setTileInfo(int type, char* file);
 	const std::string& getName() { return name; }
 	const int getCurrentListType() { return currentListType; }
 	const CHAR_INFO getEditorSelection(int x, int y) { return screenBuffer[x + y * MAP_WIDTH]; }

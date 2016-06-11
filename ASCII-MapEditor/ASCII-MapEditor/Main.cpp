@@ -6,6 +6,11 @@ Map map;
 Map* currentMap = NULL;
 Tile* cursorTile = NULL;
 COORD cursorPosition = { 0 };
+COORD promptPosition = { 0, MAP_HEIGHT - EDITOR_HEIGHT };
+
+int itemIndex = 0;
+int monsterIndex = 0;
+int npcIndex = 0;
 
 vector<Tile> tiles;
 vector<Item> items;
@@ -23,19 +28,39 @@ void checkKeyboardInput(const INPUT_RECORD& inputRecord) {
 		exit(0);
 	}
 	else if (inputRecord.Event.KeyEvent.wVirtualKeyCode == 'I'){
-		// TODO: Set listType to item tiles
+		itemIndex = 0;
+		cursorTile = &items[itemIndex];
+		map.setCurrentListType(ITEM_TYPE);
 	}
 	else if (inputRecord.Event.KeyEvent.wVirtualKeyCode == 'M') {
-		// TODO: Set listType to monster tiles
+		monsterIndex = 0;
+		cursorTile = &monsters[monsterIndex];
+		map.setCurrentListType(MONSTER_TYPE);
 	}
 	else if (inputRecord.Event.KeyEvent.wVirtualKeyCode == 'N') {
-		// TODO: Set listType to npc tiles
+		npcIndex = 0;
+		cursorTile = &npcs[npcIndex];
+		map.setCurrentListType(NPC_TYPE);
 	}
 	else if (inputRecord.Event.KeyEvent.wVirtualKeyCode == 'T') {
-		// TODO: Set listType to transition tiles
+		CHAR_INFO image = { 'T', FOREGROUND_RED };
+		cursorTile->setCharInfo(image);
+		cursorTile = &tiles[tiles.size() - 1];
+		map.setCurrentListType(TRANSITION_TYPE);
 	}
 	else if (inputRecord.Event.KeyEvent.wVirtualKeyCode == VK_SPACE) {
-		// TODO: Cycle through list tiles
+		if (map.getCurrentListType() == ITEM_TYPE) {
+			itemIndex = (itemIndex + 1) % (int)items.size();
+			cursorTile = &items[itemIndex];
+		}
+		else if (map.getCurrentListType() == MONSTER_TYPE) {
+			monsterIndex = (monsterIndex + 1) % (int)monsters.size();
+			cursorTile = &monsters[monsterIndex];
+		}
+		else if (map.getCurrentListType() == NPC_TYPE) {
+			npcIndex = (npcIndex + 1) % (int)npcs.size();
+			cursorTile = &npcs[npcIndex];
+		}
 	}
 }
 
@@ -64,11 +89,18 @@ void checkMouseInput(const INPUT_RECORD& inputRecord) {
 
 		}
 		else {
-			// TODO: Add chosen tile into the map
+			if (cursorTile != NULL) {
+				currentMap->insertTile(cursorTile, cursorPosition.X, cursorPosition.Y);
+			}
 		}
 	}
 	if (inputRecord.Event.MouseEvent.dwButtonState == RIGHTMOST_BUTTON_PRESSED) {
-		// TODO: Remove current cursor tile or remove tile under cursor
+		if (cursorTile == NULL) {
+			currentMap->deleteTile(cursorPosition.X, cursorPosition.Y);
+		}
+		else {
+			cursorTile = NULL;
+		}
 	}
 }
 

@@ -1,0 +1,13 @@
+armor >	life: 0 strength: 0 protection: 10
+axe > life: 0 strength: 8 protection: 0
+boots > life: 0 strength: 1 protection: 3
+food > 	life: 150 strength: 0 protection: 0
+food2 > life: -25 strength: 0 protection: 0
+food3 > life: 50 strength: 0 protection: 0
+mace > life: 0 strength: 10 protection: 2
+numchucks > life: 0 strength: 6 protection: 4
+shield > life: 0 strength: 0 protection: 10
+shirt > life: 0 strength: 0 protection: 5
+sword > life: 0 strength: 15 protection: 2
+sword2 > life: 0 strength: 11 protection: 3
+sword3 > life: 0 strength: 18 protection: 1

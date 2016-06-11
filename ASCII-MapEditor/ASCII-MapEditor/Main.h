@@ -11,6 +11,7 @@ extern Map map;
 extern Map* currentMap;
 extern Tile* cursorTile;
 extern COORD cursorPosition;
+extern COORD promptPosition;
 
 extern std::vector<Tile> tiles;
 extern std::vector<Item> items;
