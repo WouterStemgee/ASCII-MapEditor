@@ -77,6 +77,73 @@ void Map::draw() {
 	drawTileInfo();
 }
 
+void Map::load(char * fileName) {
+	if (!strstr(fileName, MAP_EXTENSION))
+		strcat(fileName, MAP_EXTENSION);
+	FILE *fp = fopen(fileName, "rb");
+	if (!fp) {
+		MessageBox(NULL, "Can't Find File", "Error", MB_OK);
+		return;
+	}
+	m_tiles.clear();
+	m_items.clear();
+	m_monsters.clear();
+	m_npcs.clear();
+	m_transitions.clear();
+	int tileSize = 0, itemSize = 0, monsterSize = 0, npcSize = 0, transitionSize = 0;
+	fread(&tileSize, sizeof(int), 1, fp);
+	fread(&itemSize, sizeof(int), 1, fp);
+	fread(&monsterSize, sizeof(int), 1, fp);
+	fread(&npcSize, sizeof(int), 1, fp);
+	fread(&transitionSize, sizeof(int), 1, fp);
+	m_tiles.resize(tileSize);
+	m_items.resize(itemSize);
+	m_monsters.resize(monsterSize);
+	m_npcs.resize(npcSize);
+	m_transitions.resize(transitionSize);
+	for (int i = 0; i < tileSize; i++)
+		fread(&m_tiles[i], sizeof(Tile), 1, fp);
+	for (int i = 0; i < itemSize; i++)
+		fread(&m_items[i], sizeof(Item), 1, fp);
+	for (int i = 0; i < monsterSize; i++)
+		fread(&m_monsters[i], sizeof(Monster), 1, fp);
+	for (int i = 0; i < npcSize; i++)
+		fread(&m_npcs[i], sizeof(Npc), 1, fp);
+	for (int i = 0; i < transitionSize; i++)
+		fread(&m_transitions[i], sizeof(Transition), 1, fp);
+	fclose(fp);
+	name = fileName;
+}
+
+void Map::save(char * fileName) {
+	if (!strstr(fileName, MAP_EXTENSION))
+		strcat(fileName, MAP_EXTENSION);
+	FILE* fp = fopen(fileName, "wb");
+	if (!fp) {
+		MessageBox(NULL, "Can't Write File", "Error", MB_OK);
+	}
+	int tileSize = (int)m_tiles.size();
+	int itemSize = (int)m_items.size();
+	int monsterSize = (int)m_monsters.size();
+	int npcSize = (int)m_npcs.size();
+	int transitionSize = (int)m_transitions.size();
+	fwrite(&tileSize, sizeof(int), 1, fp);
+	fwrite(&itemSize, sizeof(int), 1, fp);
+	fwrite(&monsterSize, sizeof(int), 1, fp);
+	fwrite(&npcSize, sizeof(int), 1, fp);
+	fwrite(&transitionSize, sizeof(int), 1, fp);
+	for (int i = 0; i < tileSize; i++)
+		fwrite(&m_tiles[i], sizeof(Tile), 1, fp);
+	for (int i = 0; i < itemSize; i++)
+		fwrite(&m_items[i], sizeof(Item), 1, fp);
+	for (int i = 0; i < monsterSize; i++)
+		fwrite(&m_monsters[i], sizeof(Monster), 1, fp);
+	for (int i = 0; i < npcSize; i++)
+		fwrite(&m_transitions[i], sizeof(Transition), 1, fp);
+	fclose(fp);
+	name = fileName;
+}
+
 void Map::drawTileInfo() {
 	if (cursorTile == NULL) return;
 	if (map.getCurrentListType() == TILE_TYPE || currentMap->getCurrentListType() == TRANSITION_TYPE) return;
@@ -286,4 +353,3 @@ void Map::setDefault() {
 	setTileInfo(MONSTER_TYPE, MONSTER_INFO_FILE);
 	setTileInfo(NPC_TYPE, NPC_INFO_FILE);
 }
-

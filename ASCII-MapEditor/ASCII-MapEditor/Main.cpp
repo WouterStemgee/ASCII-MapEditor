@@ -23,6 +23,29 @@ void init() {
 	currentMap = &map;
 }
 
+void loadOrSaveMap(bool load) {
+	string mapName = "";
+	char fileName[255] = { 0 };
+	HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleCursorPosition(output, promptPosition);
+	cout << "\t\t\t\t\t\t\t\t\t\t";
+	SetConsoleCursorPosition(output, promptPosition);
+	HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
+	SetConsoleMode(input, ENABLE_PROCESSED_INPUT | ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT);
+	if (load)
+		cout << "Enter a map to load: ";
+	else
+		cout << "Enter a map to Save: ";
+	cin >> mapName;
+	strcpy(fileName, mapName.c_str());
+	if (load)
+		map.load(fileName);
+	else
+		map.save(fileName);
+	SetConsoleMode(input, ENABLE_PROCESSED_INPUT | ENABLE_MOUSE_INPUT);
+	map.draw();
+}
+
 void checkKeyboardInput(const INPUT_RECORD& inputRecord) {
 	if (inputRecord.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE) {
 		exit(0);
@@ -62,6 +85,10 @@ void checkKeyboardInput(const INPUT_RECORD& inputRecord) {
 			cursorTile = &npcs[npcIndex];
 		}
 	}
+	else if (inputRecord.Event.KeyEvent.wVirtualKeyCode == 'L')
+		loadOrSaveMap(true);
+	else if (inputRecord.Event.KeyEvent.wVirtualKeyCode == 'S')
+		loadOrSaveMap(false);
 }
 
 void checkMouseInput(const INPUT_RECORD& inputRecord) {

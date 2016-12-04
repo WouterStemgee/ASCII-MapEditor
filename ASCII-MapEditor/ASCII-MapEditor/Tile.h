@@ -110,6 +110,8 @@ public:
 	Map();
 	void setDefault();
 	void draw();
+	void load(char* fileName);
+	void save(char* fileName);
 	void setCurrentListType(int _currentListType) { currentListType = _currentListType; }
 	void drawTileInfo();
 	void insertTile(Tile* tile, int x, int y);
