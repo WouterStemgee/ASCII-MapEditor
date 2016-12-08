@@ -1,11 +1,11 @@
 #pragma once
 
-#include <vector>
-#include <iostream>
-#include <string>
-#include <Windows.h>
+#include <vector>							
+#include <iostream>							
+#include <string>							
+#include <windows.h>						
 
-#include "Tile.h"
+#include "Tile.h"							
 
 extern Map map;
 extern Map* currentMap;

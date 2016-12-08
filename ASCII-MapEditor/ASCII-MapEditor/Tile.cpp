@@ -1,25 +1,36 @@
-#include "Main.h"
-#include "Tile.h"
+#include "Main.h"		
+#include "Tile.h"			
 
 using namespace std;
 
-Tile::Tile() : type(0) {
+Tile::Tile() :type(0) {
 	memset(&charInfo, 0, sizeof(COORD));
 }
 
-Item::Item() : life(0), strength(0), protection(0) {}
+Item::Item() : life(0), strength(0), protection(0) {
+	memset(name, 0, MAX_NAME_LENGTH);
+}
 
-Monster::Monster() : life(0), strength(0), speed(0) {}
+Monster::Monster() : life(0), strength(0), speed(0) {
+	memset(name, 0, MAX_NAME_LENGTH);
+}
 
 Transition::Transition() {
+	memset(nameCurrentMap, 0, MAX_PATH);
+	memset(nameDestinationMap, 0, MAX_PATH);
 	positionDestinationMap.X = positionDestinationMap.Y = 0;
 }
 
-Npc::Npc() : life(0), strength(0), speed(0) {}
+Npc::Npc() : life(0), strength(0), speed(0) {
+	memset(name, 0, MAX_NAME_LENGTH);
+	memset(message, 0, MAX_MESSAGE_LENGTH);
+}
 
-Map::Map() : currentListType(TILE_TYPE) {}
+Map::Map() :currentListType(TILE_TYPE) {
+	memset(name, 0, MAX_PATH);
+}
 
-const CHAR_INFO Map::addNewBackground(CHAR_INFO image1, CHAR_INFO image2) {
+CHAR_INFO Map::addNewBackground(CHAR_INFO image1, CHAR_INFO image2) {
 	image1.Attributes = image1.Attributes << 12;
 	image1.Attributes = image1.Attributes >> 12;
 	image2.Attributes = image2.Attributes >> 4;
@@ -28,7 +39,8 @@ const CHAR_INFO Map::addNewBackground(CHAR_INFO image1, CHAR_INFO image2) {
 	return image1;
 }
 
-const CHAR_INFO Map::addNewForeground(CHAR_INFO image1, CHAR_INFO image2) {
+CHAR_INFO Map::addNewForeground(CHAR_INFO image1, CHAR_INFO image2)
+{
 	image1.Attributes = image1.Attributes >> 4;
 	image1.Attributes = image1.Attributes << 4;
 	image2.Attributes = image2.Attributes << 12;
@@ -38,35 +50,36 @@ const CHAR_INFO Map::addNewForeground(CHAR_INFO image1, CHAR_INFO image2) {
 }
 
 void Map::draw() {
-	SMALL_RECT drawRect = { 0, 0, MAP_WIDTH - 1, MAP_HEIGHT - 1};
-	COORD bufferSize = { MAP_WIDTH, MAP_HEIGHT };
-	COORD zeroZero = {0, 0};
+	SMALL_RECT drawRect = { 0, 0, MAP_WIDTH - 1, MAP_HEIGHT - 1 };
+	COORD bufferSize = { MAP_WIDTH , MAP_HEIGHT };
+	COORD zeroZero = { 0, 0 };
 	DWORD dwResult = 0;
 	char cursor[2] = "";
 	HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
-	for (size_t i = 0; i < m_tiles.size(); i++) {
+	for (int i = 0; i < (int)m_tiles.size(); i++) {
 		screenBuffer[i] = m_tiles[i].getCharInfo();
 	}
-	for (size_t i = 0; i < m_items.size(); i++) {
+	for (int i = 0; i < (int)m_items.size(); i++) {
 		COORD index = m_items[i].getIndex();
 		int slot = index.X + index.Y * MAP_WIDTH;
 		screenBuffer[slot] = addNewBackground(m_items[i].getCharInfo(), screenBuffer[slot]);
 	}
-	for (size_t i = 0; i < m_monsters.size(); i++) {
+	for (int i = 0; i < (int)m_monsters.size(); i++) {
 		COORD index = m_monsters[i].getIndex();
 		int slot = index.X + index.Y * MAP_WIDTH;
 		screenBuffer[slot] = addNewBackground(m_monsters[i].getCharInfo(), screenBuffer[slot]);
 	}
-	for (size_t i = 0; i < m_npcs.size(); i++) {
+	for (int i = 0; i < (int)m_npcs.size(); i++) {
 		COORD index = m_npcs[i].getIndex();
 		int slot = index.X + index.Y * MAP_WIDTH;
 		screenBuffer[slot] = addNewBackground(m_npcs[i].getCharInfo(), screenBuffer[slot]);
 	}
-	for (size_t i = 0; i < m_transitions.size(); i++) {
+	for (int i = 0; i < (int)m_transitions.size(); i++) {
 		COORD index = m_transitions[i].getIndex();
 		int slot = index.X + index.Y * MAP_WIDTH;
 		screenBuffer[slot] = m_transitions[i].getCharInfo();
 	}
+	
 	WriteConsoleOutput(output, screenBuffer, bufferSize, zeroZero, &drawRect);
 	if (cursorTile != NULL) {
 		CHAR_INFO cursorInfo = cursorTile->getCharInfo();
@@ -112,7 +125,7 @@ void Map::load(char * fileName) {
 	for (int i = 0; i < transitionSize; i++)
 		fread(&m_transitions[i], sizeof(Transition), 1, fp);
 	fclose(fp);
-	name = fileName;
+	strcpy(name, fileName);
 }
 
 void Map::save(char * fileName) {
@@ -121,6 +134,7 @@ void Map::save(char * fileName) {
 	FILE* fp = fopen(fileName, "wb");
 	if (!fp) {
 		MessageBox(NULL, "Can't Write File", "Error", MB_OK);
+		return;
 	}
 	int tileSize = (int)m_tiles.size();
 	int itemSize = (int)m_items.size();
@@ -139,26 +153,30 @@ void Map::save(char * fileName) {
 	for (int i = 0; i < monsterSize; i++)
 		fwrite(&m_monsters[i], sizeof(Monster), 1, fp);
 	for (int i = 0; i < npcSize; i++)
+		fwrite(&m_npcs[i], sizeof(Npc), 1, fp);
+	for (int i = 0; i < transitionSize; i++)
 		fwrite(&m_transitions[i], sizeof(Transition), 1, fp);
 	fclose(fp);
-	name = fileName;
+	strcpy(name, fileName);
 }
 
-void Map::drawTileInfo() {
+void Map::drawTileInfo()
+{
 	if (cursorTile == NULL) return;
-	if (map.getCurrentListType() == TILE_TYPE || currentMap->getCurrentListType() == TRANSITION_TYPE) return;
-	string nameTile;
+	if (map.getCurrentListType() == TILE_TYPE || currentMap->getCurrentListType() == TRANSITION_TYPE)
+		return;
+	char nameTile[255] = {0};
 	if (map.getCurrentListType() == ITEM_TYPE) {
-		Item* item = (Item*)cursorTile;
-		nameTile = item->getName();
+		Item * item = (Item*)cursorTile;
+		strcpy(nameTile, item->getName());
 	}
 	else if (map.getCurrentListType() == MONSTER_TYPE) {
-		Monster* monster = (Monster*)cursorTile;
-		nameTile = monster->getName();
+		Monster * monster = (Monster*)cursorTile;
+		strcpy(nameTile, monster->getName());
 	}
 	else if (map.getCurrentListType() == NPC_TYPE) {
-		Npc* npc = (Npc*)cursorTile;
-		nameTile = npc->getName();
+		Npc * npc = (Npc*)cursorTile;
+		strcpy(nameTile, npc->getName());
 	}
 	HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleCursorPosition(output, promptPosition);
@@ -166,7 +184,7 @@ void Map::drawTileInfo() {
 }
 
 void Map::insertTile(Tile* tile, int x, int y) {
-	char type = 't';
+	int type = TRANSITION_TYPE;
 	if (currentMap->getCurrentListType() != TRANSITION_TYPE)
 		type = tile->getType();
 	if (type == ITEM_TYPE) {
@@ -190,7 +208,7 @@ void Map::insertTile(Tile* tile, int x, int y) {
 		m_transitions.back().setNameCurrentMap(currentMap->getName());
 	}
 	else {
-		for (size_t i = 0; i < m_tiles.size(); i++) {
+		for (int i = 0; i < (int)m_tiles.size(); i++) {
 			COORD index = m_tiles[i].getIndex();
 			if (index.X == x && index.Y == y) {
 				m_tiles[i] = *tile;
@@ -236,12 +254,13 @@ void Map::deleteTile(int mapX, int mapY) {
 	}
 }
 
-void Map::setTileInfo(int type, char * file) {
+
+void Map::setTileInfo(int type, char * fileName) {
 	char name[MAX_PATH] = {0};
-	FILE* fp = fopen(file, "r");
+	FILE* fp = fopen(fileName, "r");
 	if (!fp) {
-		sprintf(file, "Unable to find tile info in %s", file);
-		MessageBox(NULL, file, "Error", MB_OK);
+		sprintf(fileName, "Unable to find tile info in %s", fileName);
+		MessageBox(NULL, fileName, "Error", MB_OK);
 		return;
 	}
 	while (!feof(fp)) {
@@ -278,9 +297,8 @@ void Map::setTileInfo(int type, char * file) {
 			CHAR_INFO image = { 1, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE };
 			fscanf(fp, "%s > life: %d strength: %d speed: %d Message: ", name, &life, &str, &speed);
 			fgets(message, MAX_MESSAGE_LENGTH, fp);
-			if (strlen(message) > 1) {
+			if (strlen(message) > 1)
 				message[strlen(message) - 1] = '\0';
-			}
 			tempNpc.setCharInfo(image);
 			tempNpc.setLife(life);
 			tempNpc.setStrength(str);
@@ -300,14 +318,12 @@ void Map::setDefault() {
 	HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
 	SetConsoleWindowInfo(output, TRUE, &size);
 	SetConsoleMode(input, ENABLE_PROCESSED_INPUT | ENABLE_MOUSE_INPUT);
-
 	m_tiles.clear();
 	m_items.clear();
 	m_monsters.clear();
 	m_npcs.clear();
 	m_transitions.clear();
-	name = "";
-
+	strcpy(name, "");
 	Tile defaultTile;
 	CHAR_INFO defaultImage = { (WCHAR)219, FOREGROUND_GREEN };
 	defaultTile.setCharInfo(defaultImage);
@@ -318,7 +334,6 @@ void Map::setDefault() {
 			screenBuffer[x + y * MAP_WIDTH] = defaultImage;
 		}
 	}
-
 	for (int i = 0; i <= 286; i++) {
 		WORD tileColor = { FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE };
 		int index = i + (MAP_HEIGHT - EDITOR_HEIGHT + 1) * MAP_WIDTH;
@@ -341,15 +356,57 @@ void Map::setDefault() {
 		tempTile.setType(TILE_TYPE);
 		tiles.push_back(tempTile);
 	}
-
 	Tile tempCursorTile;
 	CHAR_INFO tempCursor = { tiles[176].getCharInfo().Char, BACKGROUND_GREEN };
 	tempCursorTile.setCharInfo(tempCursor);
 	tempCursorTile.setType(tiles[176].getType());
-	
 	tiles.push_back(tempCursorTile);
 	cursorTile = &tiles[tiles.size() - 1];
 	setTileInfo(ITEM_TYPE, ITEM_INFO_FILE);
 	setTileInfo(MONSTER_TYPE, MONSTER_INFO_FILE);
 	setTileInfo(NPC_TYPE, NPC_INFO_FILE);
+}
+
+int Map::getCurrentListSize() {
+	if (currentListType == ITEM_TYPE)
+		return (int)m_items.size();
+	else if (currentListType == MONSTER_TYPE)
+		return (int)m_monsters.size();
+	else if (currentListType == NPC_TYPE)
+		return (int)m_npcs.size();
+	else if (currentListType == TRANSITION_TYPE)
+		return (int)m_transitions.size();
+	else
+		return (int)m_tiles.size();
+}
+
+Tile *Map::getCurrentListTile(int index) {
+	if (currentListType == ITEM_TYPE)
+		return &m_items[index];
+	else if (currentListType == MONSTER_TYPE)
+		return &m_monsters[index];
+	else if (currentListType == NPC_TYPE)
+		return &m_npcs[index];
+	else if (currentListType == TRANSITION_TYPE)
+		return &m_transitions[index];
+	else
+		return &m_tiles[index];
+}
+
+void Map::setTransitions(char *fileName, Transition *transition) {
+	for (int i = 0; i < (int)m_transitions.size(); i++) {
+		if (strlen(m_transitions[i].getNameDestinationMap()) <= 1) {
+			m_transitions[i].setNameDestinationMap(fileName);
+			m_transitions[i].setPositionDestinationMap(transition->getIndex());
+		}
+	}
+}
+
+void Map::deleteBlankTransitions() {
+	int size = (int)m_transitions.size();
+	for (int i = size - 1; i >= 0; i--) {
+		if (strlen(m_transitions[i].getNameDestinationMap()) <= 1) {
+			m_transitions.erase(m_transitions.begin() + i);
+		}
+	}
 }

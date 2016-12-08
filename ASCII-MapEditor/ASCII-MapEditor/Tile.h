@@ -1,13 +1,14 @@
 #pragma once
 
-#include "Main.h"
+#include "Main.h"								
 
-#define MAP_WIDTH			120
-#define MAP_HEIGHT			75
-#define EDITOR_HEIGHT		4
-#define MAP_EXTENSION		".map"
+#define MAP_WIDTH			80
+#define MAP_HEIGHT			50
+#define EDITOR_HEIGHT		5
+#define MAX_NAME_LENGTH		50
 #define MAX_MESSAGE_LENGTH	1000
 
+#define MAP_EXTENSION		".map"
 #define MONSTER_INFO_FILE	"Monsters.txt"
 #define ITEM_INFO_FILE		"Items.txt"
 #define NPC_INFO_FILE		"Npcs.txt"
@@ -24,9 +25,9 @@ public:
 	void setCharInfo(CHAR_INFO _charInfo) { charInfo = _charInfo; }
 	void setType(char _type) { type = _type; }
 	void setIndex(int _x, int _y) { index.X = _x; index.Y = _y; }
-	const CHAR_INFO getCharInfo() { return charInfo; }
-	const char getType() { return type; }
-	const COORD getIndex() { return index; }
+	CHAR_INFO getCharInfo() { return charInfo; }
+	char getType() { return type; }
+	COORD getIndex() { return index; }
 protected:
 	CHAR_INFO charInfo;
 	char type;
@@ -39,34 +40,35 @@ public:
 	void setLife(int _life) { life = _life; }
 	void setStrength(int _strength) { strength = _strength; }
 	void setProtection(int _protection) { protection = _protection; }
-	void setName(const std::string& _name) { name = _name; }
-	const int getLife() { return life; }
-	const int getStrength() { return strength; }
-	const int getProtection() { return protection; }
-	const std::string& getName() { return name; }
+	void setName(char *_name) { strcpy(name, _name); }
+	int getLife() { return life; }
+	int getStrength() { return strength; }
+	int getProtection() { return protection; }
+	char* getName() { return name; }
 private:
 	int life;
 	int strength;
 	int protection;
-	std::string name;
+	char name[MAX_NAME_LENGTH];
 };
+
 
 class Monster : public Tile {
 public:
 	Monster();
 	void setLife(int _life) { life = _life; }
 	void setStrength(int _strength) { strength = _strength; }
-	void setName(const std::string& _name) { name = _name; }
+	void setName(char *_name) { strcpy(name, _name); }
 	void setSpeed(int _speed) { speed = _speed; }
-	const int getLife() { return life; }
-	const int getStrength() { return strength; }
-	const std::string& getName() { return name; }
-	const int getSpeed() { return speed; }
+	int getLife() { return life; }
+	int getStrength() { return strength; }
+	int getSpeed() { return speed; }
+	char* getName() { return name; }
 private:
 	int life;
 	int strength;
 	int speed;
-	std::string name;
+	char name[MAX_NAME_LENGTH];
 };
 
 class Npc : public Tile {
@@ -75,33 +77,33 @@ public:
 	void setLife(int _life) { life = _life; }
 	void setStrength(int _strength) { strength = _strength; }
 	void setSpeed(int _speed) { speed = _speed; }
-	void setName(const std::string& _name) { name = _name; }
-	void setMessage(const std::string& _message) { message = _message; }
-	const int getLife() { return life; }
-	const int getStrength() { return strength; }
-	const int getSpeed() { return speed; }
-	const std::string& getName() { return name; }
-	const std::string& getMessage() { return name; }
+	void setName(char *_name) { strcpy(name, _name); }
+	void setMessage(char *_message) { strncpy(message, _message, MAX_MESSAGE_LENGTH); }
+	int getLife() { return life; }
+	int getStrength() { return strength; }
+	int getSpeed() { return speed; }
+	char *getName() { return name; }
+	char *getMessage() { return message; }
 private:
 	int life;
 	int strength;
 	int speed;
-	std::string name;
-	std::string message;
+	char name[MAX_NAME_LENGTH];
+	char message[MAX_MESSAGE_LENGTH];
 };
 
 class Transition : public Tile {
 public:
 	Transition();
-	void setNameCurrentMap(const std::string& _nameCurentMap) { nameCurrentMap = _nameCurentMap; }
-	void setNameDestinationMap(const std::string& _nameDestinationMap) { nameDestinationMap = _nameDestinationMap; }
-	void setPositionDestinationMap(const COORD& _positionDestinationMap) { positionDestinationMap = _positionDestinationMap; }
-	const std::string& getNameCurrentMap() { return nameCurrentMap; }
-	const std::string& getNameDestinationMap() { return nameDestinationMap; }
-	const COORD& getPositionDestinationMap() { return positionDestinationMap; }
+	void setNameCurrentMap(char *_nameCurentMap) { strcpy(nameCurrentMap, _nameCurentMap); }
+	void setNameDestinationMap(char *_nameDestinationMap) { strcpy(nameDestinationMap, _nameDestinationMap); }
+	void setPositionDestinationMap(COORD _positionDestinationMap) { positionDestinationMap = _positionDestinationMap; }
+	char *getNameCurrentMap() { return nameCurrentMap; }
+	char *getNameDestinationMap() { return nameDestinationMap; }
+	COORD getPositionDestinationMap() { return positionDestinationMap; }
 private:
-	std::string nameCurrentMap;
-	std::string nameDestinationMap;
+	char nameCurrentMap[MAX_PATH];
+	char nameDestinationMap[MAX_PATH];
 	COORD positionDestinationMap;
 };
 
@@ -109,22 +111,26 @@ class Map {
 public:
 	Map();
 	void setDefault();
-	void draw();
+	void draw();	
 	void load(char* fileName);
 	void save(char* fileName);
 	void setCurrentListType(int _currentListType) { currentListType = _currentListType; }
 	void drawTileInfo();
 	void insertTile(Tile* tile, int x, int y);
 	void deleteTile(int mapX, int mapY);
-	void setTileInfo(int type, char* file);
-	const std::string& getName() { return name; }
-	const int getCurrentListType() { return currentListType; }
-	const CHAR_INFO getEditorSelection(int x, int y) { return screenBuffer[x + y * MAP_WIDTH]; }
-	const CHAR_INFO addNewBackground(CHAR_INFO image1, CHAR_INFO image2);
-	const CHAR_INFO addNewForeground(CHAR_INFO image1, CHAR_INFO image2);
+	void setTileInfo(int type, char* fileName);	
+	void setTransitions(char* fileName, Transition* transition);
+	void deleteBlankTransitions();
+	char* getName() { return name; }
+	int getCurrentListSize();
+	int getCurrentListType() { return currentListType; }
+	Tile* getCurrentListTile(int index);
+	CHAR_INFO getEditorSelection(int x, int y) { return screenBuffer[x + y * MAP_WIDTH]; }
+	CHAR_INFO addNewBackground(CHAR_INFO image1, CHAR_INFO image2);
+	CHAR_INFO addNewForeground(CHAR_INFO image1, CHAR_INFO image2);
 private:
 	CHAR_INFO screenBuffer[MAP_WIDTH * MAP_HEIGHT];
-	std::string name;
+	char name[MAX_PATH];
 	int currentListType;
 	std::vector<Tile> m_tiles;
 	std::vector<Item> m_items;
