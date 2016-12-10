@@ -27,6 +27,18 @@ void init() {
 	currentMap = &map;
 }
 
+void inputActionKey() {
+	int actionKey = 0;
+	HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleCursorPosition(output, promptPosition);
+	HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
+	SetConsoleMode(input, ENABLE_PROCESSED_INPUT | ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT);
+	cout << "Enter a numeric action key for this tile: ";
+	cin >> actionKey;
+	cursorTile->setActionKey(actionKey);
+	SetConsoleMode(input, ENABLE_PROCESSED_INPUT | ENABLE_MOUSE_INPUT);
+}
+
 bool getTransitionFileName(char *name) {
 	string mapName = "";
 	HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -128,6 +140,8 @@ void checkKeyboardInput(const INPUT_RECORD& inputRecord) {
 		loadOrSaveMap(true);
 	else if (inputRecord.Event.KeyEvent.wVirtualKeyCode == 'S')
 		loadOrSaveMap(false);
+	else if (inputRecord.Event.KeyEvent.wVirtualKeyCode == 'A')
+		inputActionKey();
 	else if (inputRecord.Event.KeyEvent.wVirtualKeyCode == VK_SHIFT)
 		shiftKeyDown = true;
 }
@@ -154,11 +168,20 @@ void checkMouseInput(const INPUT_RECORD& inputRecord) {
 				tiles[tiles.size() - 1].setCharInfo(chosenTile);
 				cursorTile = &tiles[tiles.size() - 1];
 				map.setCurrentListType(TILE_TYPE);
+				if (shiftKeyDown)
+					cursorTile->setSolid(true);
+				else
+					cursorTile->setSolid(false);
 			}
 		}
 		else {
 			if (cursorTile != NULL)
 				currentMap->insertTile(cursorTile, cursorPosition.X, cursorPosition.Y);
+			else if (currentMap->getCurrentListType() == TILE_TYPE) {
+				if (shiftKeyDown) {
+					map.setCollisionTile(true, cursorPosition.X, cursorPosition.Y);
+				}
+			}
 			if (currentMap->getCurrentListType() == TRANSITION_TYPE) {
 				if (!shiftKeyDown || transitionMapOpen)
 					handleTransitionTiles();
@@ -167,10 +190,22 @@ void checkMouseInput(const INPUT_RECORD& inputRecord) {
 	}
 	if (inputRecord.Event.MouseEvent.dwButtonState == RIGHTMOST_BUTTON_PRESSED) {
 		if (cursorTile == NULL) {
-			currentMap->deleteTile(cursorPosition.X, cursorPosition.Y);
+			if (currentMap->getCurrentListType() == TILE_TYPE) {
+				if (cursorPosition.Y < MAP_HEIGHT - EDITOR_HEIGHT) {
+					cursorTile = &tiles[tiles.size() - 1];
+					bool isSolid = map.findMapTile(cursorPosition.X, cursorPosition.Y)->isSolid();
+					cursorTile->setSolid(isSolid);
+					cursorTile->setCharInfo(map.getEditorSelection(cursorPosition.X, cursorPosition.Y));
+				}
+			}
+			else {
+				currentMap->deleteTile(cursorPosition.X, cursorPosition.Y);
+			}
+
 		}
-		else
+		else {
 			cursorTile = NULL;
+		}
 		if (currentMap->getCurrentListType() == TRANSITION_TYPE) {
 			if (transitionMapOpen) {
 				currentMap = &map;

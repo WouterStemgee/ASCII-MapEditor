@@ -25,13 +25,19 @@ public:
 	void setCharInfo(CHAR_INFO _charInfo) { charInfo = _charInfo; }
 	void setType(char _type) { type = _type; }
 	void setIndex(int _x, int _y) { index.X = _x; index.Y = _y; }
-	CHAR_INFO getCharInfo() { return charInfo; }
+	void setSolid(bool _solid) { solid = _solid; }
+	void setActionKey(int _actionKey) { actionKey = _actionKey; }
 	char getType() { return type; }
+	int getActionKey() { return actionKey; }
+	bool isSolid() { return solid; }
+	CHAR_INFO getCharInfo() { return charInfo; }
 	COORD getIndex() { return index; }
 protected:
 	CHAR_INFO charInfo;
 	char type;
 	COORD index;
+	bool solid;
+	int actionKey;
 };
 
 class Item : public Tile {
@@ -121,10 +127,12 @@ public:
 	void setTileInfo(int type, char* fileName);	
 	void setTransitions(char* fileName, Transition* transition);
 	void deleteBlankTransitions();
+	void setCollisionTile(bool isSolid, int x, int y);
 	char* getName() { return name; }
 	int getCurrentListSize();
 	int getCurrentListType() { return currentListType; }
 	Tile* getCurrentListTile(int index);
+	Tile* findMapTile(int mapX, int mapY);
 	CHAR_INFO getEditorSelection(int x, int y) { return screenBuffer[x + y * MAP_WIDTH]; }
 	CHAR_INFO addNewBackground(CHAR_INFO image1, CHAR_INFO image2);
 	CHAR_INFO addNewForeground(CHAR_INFO image1, CHAR_INFO image2);

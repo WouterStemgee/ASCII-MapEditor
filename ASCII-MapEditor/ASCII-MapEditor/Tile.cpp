@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Tile::Tile() :type(0) {
+Tile::Tile() : type(0), solid(false), actionKey(0) {
 	memset(&charInfo, 0, sizeof(COORD));
 }
 
@@ -160,27 +160,56 @@ void Map::save(char * fileName) {
 	strcpy(name, fileName);
 }
 
-void Map::drawTileInfo()
-{
-	if (cursorTile == NULL) return;
-	if (map.getCurrentListType() == TILE_TYPE || currentMap->getCurrentListType() == TRANSITION_TYPE)
-		return;
-	char nameTile[255] = {0};
-	if (map.getCurrentListType() == ITEM_TYPE) {
-		Item * item = (Item*)cursorTile;
-		strcpy(nameTile, item->getName());
-	}
-	else if (map.getCurrentListType() == MONSTER_TYPE) {
-		Monster * monster = (Monster*)cursorTile;
-		strcpy(nameTile, monster->getName());
-	}
-	else if (map.getCurrentListType() == NPC_TYPE) {
-		Npc * npc = (Npc*)cursorTile;
-		strcpy(nameTile, npc->getName());
-	}
+void Map::drawTileInfo() {
 	HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleCursorPosition(output, promptPosition);
-	cout << "(Space Bar Cycles) Current tile: " << nameTile;
+	int type = map.getCurrentListType();
+	if (cursorTile) {
+		if (type == TILE_TYPE) {
+			if (cursorTile->isSolid())
+				cout << "Current tile is solid";
+			else
+				cout << "Current tile is not solid";
+		}
+		else if (type == ITEM_TYPE) {
+			Item * item = (Item*)cursorTile;
+			cout << "(Space Bar Cycles) Current tile: " << item->getName();
+		}
+		else if (type == MONSTER_TYPE) {
+			Monster * monster = (Monster*)cursorTile;
+			cout << "(Space Bar Cycles) Current tile: " << monster->getName();
+		}
+		else if (type == NPC_TYPE) {
+			Npc * npc = (Npc*)cursorTile;
+			cout << "(Space Bar Cycles) Current tile: " << npc->getName();
+		}
+	}
+	else {
+		if (!findMapTile(cursorPosition.X, cursorPosition.Y)) return;
+		if (type == TILE_TYPE) {
+			Tile* tile = findMapTile(cursorPosition.X, cursorPosition.Y);
+			cout << "Tile: (" << tile->getIndex().X << "," << tile->getIndex().Y;
+			cout << ") Solid: " << tile->isSolid() << " Action#: " << tile->getActionKey();
+		}
+		else if (type == ITEM_TYPE) {
+			Item* item = (Item*)findMapTile(cursorPosition.X, cursorPosition.Y);
+			cout << "Item: " << item->getName() << " Action#: " << item->getActionKey();
+		}
+		else if (type == MONSTER_TYPE) {
+			Monster* monster = (Monster*)findMapTile(cursorPosition.X, cursorPosition.Y);
+			cout << "Monster: " << monster->getName() << " Action#: " << monster->getActionKey();
+		}
+		else if (type == NPC_TYPE) {
+			Npc* npc = (Npc*)findMapTile(cursorPosition.X, cursorPosition.Y);
+			cout << "Npc: " << npc->getName() << " Action#: " << npc->getActionKey();
+			cout << " Message: " << npc->getMessage();
+		}
+		else if (type == TRANSITION_TYPE) {
+			Transition* transition = (Transition*)findMapTile(cursorPosition.X, cursorPosition.Y);
+			cout << "Transition to: " << transition->getNameDestinationMap() << " Action#: " << transition->getActionKey();
+			cout << " Position: (" << transition->getPositionDestinationMap().X << "," << transition->getPositionDestinationMap().Y << ")";
+		}
+	}
 }
 
 void Map::insertTile(Tile* tile, int x, int y) {
@@ -202,6 +231,7 @@ void Map::insertTile(Tile* tile, int x, int y) {
 	else if (type == TRANSITION_TYPE) {
 		CHAR_INFO image = { 'T', FOREGROUND_RED };
 		Transition transition;
+		transition.setActionKey(tile->getActionKey());
 		transition.setCharInfo(image);
 		m_transitions.push_back(transition);
 		m_transitions.back().setIndex(x, y);
@@ -393,6 +423,45 @@ Tile *Map::getCurrentListTile(int index) {
 		return &m_tiles[index];
 }
 
+Tile * Map::findMapTile(int mapX, int mapY) {
+	if (currentListType == TILE_TYPE) {
+		for (int i = (int)m_tiles.size() - 1; i >= 0; i--) {
+			if (m_tiles[i].getIndex().X == mapX && m_tiles[i].getIndex().Y == mapY) {
+				return &m_tiles[i];
+			}
+		}
+	}
+	else if (currentListType == ITEM_TYPE) {
+		for (int i = (int)m_items.size() - 1; i >= 0; i--) {
+			if (m_items[i].getIndex().X == mapX && m_items[i].getIndex().Y == mapY) {
+				return (Tile*)&m_items[i];
+			}
+		}
+	}
+	else if (currentListType == MONSTER_TYPE) {
+		for (int i = (int)m_monsters.size() - 1; i >= 0; i--) {
+			if (m_monsters[i].getIndex().X == mapX && m_monsters[i].getIndex().Y == mapY) {
+				return (Tile*)&m_monsters[i];
+			}
+		}
+	}
+	else if (currentListType == NPC_TYPE) {
+		for (int i = (int)m_npcs.size() - 1; i >= 0; i--) {
+			if (m_npcs[i].getIndex().X == mapX && m_npcs[i].getIndex().Y == mapY) {
+				return (Tile*)&m_npcs[i];
+			}
+		}
+	}
+	else if (currentListType == TRANSITION_TYPE) {
+		for (int i = (int)m_transitions.size() - 1; i >= 0; i--) {
+			if (m_transitions[i].getIndex().X == mapX && m_transitions[i].getIndex().Y == mapY) {
+				return (Tile*)&m_transitions[i];
+			}
+		}
+	}
+	return NULL;
+}
+
 void Map::setTransitions(char *fileName, Transition *transition) {
 	for (int i = 0; i < (int)m_transitions.size(); i++) {
 		if (strlen(m_transitions[i].getNameDestinationMap()) <= 1) {
@@ -407,6 +476,16 @@ void Map::deleteBlankTransitions() {
 	for (int i = size - 1; i >= 0; i--) {
 		if (strlen(m_transitions[i].getNameDestinationMap()) <= 1) {
 			m_transitions.erase(m_transitions.begin() + i);
+		}
+	}
+}
+
+void Map::setCollisionTile(bool isSolid, int x, int y) {
+	for (int i = 0; i < (int)m_tiles.size(); i++) {
+		COORD index = m_tiles[i].getIndex();
+		if ((x == index.X) && (y == index.Y)) {
+			m_tiles[i].setSolid(isSolid);
+			break;
 		}
 	}
 }
